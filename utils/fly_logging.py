@@ -12,7 +12,8 @@ def log_eval_rollout(cfg, rollout, state, env, reference_clip, model_path, num_s
     '''Log the rollout to wandb'''
     
     # Log the metrics for the rollout
-    for metric in ['pos_reward','bodypos_reward','joint_reward']:
+    reward_metrics = ['pos_reward', 'quat_reward', 'joint_reward', 'angvel_reward', 'bodypos_reward', 'endeff_reward', 'reward_ctrl', 'healthy_reward']
+    for metric in reward_metrics:
         metric_values = [state.metrics[metric] for state in rollout]
         table = wandb.Table(
             data=[[x, y] for (x, y) in zip(range(len(metric_values)), metric_values)],
@@ -73,30 +74,42 @@ def log_eval_rollout(cfg, rollout, state, env, reference_clip, model_path, num_s
     qposes_rollout = np.array([state.pipeline_state.qpos for state in rollout])
 
     def f(x):
-        if len(x.shape) != 1:
-            return jax.lax.dynamic_slice_in_dim(
-                x,
-                0,
-                cfg.dataset.env_args["clip_length"],
-            )
+        if (not isinstance(x,str)):
+            if (len(x.shape) != 1):
+                return jax.lax.dynamic_slice_in_dim(
+                    x,
+                    0,
+                    cfg.dataset.env_args["clip_length"],
+                )
         return jp.array([])
+
 
     ref_traj = jax.tree_util.tree_map(f, reference_clip)
     
-    repeats_per_frame = int(1/(env._mocap_hz*env.sys.mj_model.opt.timestep))
+    repeats_per_frame = 1 #int(1/(env._mocap_hz*env.sys.mj_model.opt.timestep))
     spec = mujoco.MjSpec()
     spec.from_file(cfg.dataset.rendering_mjcf)
     thorax0 = spec.find_body("thorax-0")
     first_joint0 = thorax0.first_joint()
     if (env._free_jnt == False) & ('free' in first_joint0.name):
-        qposes_ref = ref_traj.joints.copy()
+        qposes_ref = np.repeat(
+            ref_traj.joints,
+            repeats_per_frame,
+            axis=0,
+        )
+        # qposes_ref = ref_traj.joints.copy()
 
         first_joint0.delete()
         thorax1 = spec.find_body("thorax-1")
         first_joint1 = thorax1.first_joint()
         first_joint1.delete()
     elif env._free_jnt == True: 
-        qposes_ref = np.hstack([ref_traj.position, ref_traj.quaternion, ref_traj.joints])
+        # qposes_ref = np.hstack([ref_traj.position, ref_traj.quaternion, ref_traj.joints])
+        qposes_ref = np.repeat(
+            np.hstack([ref_traj.position, ref_traj.quaternion, ref_traj.joints]),
+            repeats_per_frame,
+            axis=0,
+        )
         
     mj_model = spec.compile()
 
@@ -138,7 +151,7 @@ def log_eval_rollout(cfg, rollout, state, env, reference_clip, model_path, num_s
     frames = []
     # render while stepping using mujoco
     video_path = f"{model_path}/{num_steps}.mp4"
-    with imageio.get_writer(video_path, fps=int((1.0 / env.dt))) as video:
+    with imageio.get_writer(video_path, fps=50) as video:
         with mujoco.Renderer(mj_model, height=512, width=512) as renderer:
             for qpos1, qpos2 in zip(qposes_rollout, qposes_ref):
                 mj_data.qpos = np.append(qpos1, qpos2)

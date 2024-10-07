@@ -4,7 +4,7 @@ camera: 1
 rendering_mjcf: ${paths.cwd_dir}/assets/fruitfly/fruitfly_force_pair.xml
 stac_path: ${paths.data_dir}/transform_tethered.p
 clip_idx: 0
-ref_traj_length: 15
+ref_traj_length: 5
 env_args:
   clip_length: 601
   mjcf_path: "${paths.cwd_dir}/assets/fruitfly/fruitfly_force_fastball.xml" 
@@ -15,14 +15,14 @@ env_args:
   ls_iterations: 6
   physics_steps_per_control_step: 10
   too_far_dist: 0.1
-  bad_pose_dist: 1000.0 # 60.0
-  bad_quat_dist: 1000.0 #1.25
+  bad_pose_dist: 20.0 # 60.0
+  bad_quat_dist: 80.0 #1.25
   ctrl_cost_weight: 0.01
-  pos_reward_weight: 0
-  quat_reward_weight: 0
-  joint_reward_weight: 50.0
-  angvel_reward_weight: 0.0
-  bodypos_reward_weight: 10.0
+  pos_reward_weight: 0.0
+  quat_reward_weight: 1.0
+  joint_reward_weight: 10.0
+  angvel_reward_weight: 10.0
+  bodypos_reward_weight: 1.0
   endeff_reward_weight: 10.0
   healthy_reward: 0.25
   healthy_z_range: [-0.05, 0.1]
@@ -150,9 +150,9 @@ env_args:
     - tibia_T1_left
     - tarsus_T1_left
     - coxa_flexion_T1_right
-    - oxa_twist_T1_right
-    - emur_T1_right
-    - emur_twist_T1_right
+    - coxa_twist_T1_right
+    - femur_T1_right
+    - femur_twist_T1_right
     - tibia_T1_right
     - tarsus_T1_right
     - coxa_flexion_T2_left
@@ -162,11 +162,11 @@ env_args:
     - tibia_T2_left
     - tarsus_T2_left
     - coxa_flexion_T2_right
-    - oxa_twist_T2_right
-    - emur_T2_right
-    - emur_twist_T2_right
+    - coxa_twist_T2_right
+    - femur_T2_right
+    - femur_twist_T2_right
     - tibia_T2_right
-    - tarsus_T2_righ
+    - tarsus_T2_right
     - coxa_flexion_T3_left
     - coxa_twist_T3_left
     - femur_T3_left
@@ -174,9 +174,9 @@ env_args:
     - tibia_T3_left
     - tarsus_T3_left
     - coxa_flexion_T3_right
-    - oxa_twist_T3_right
-    - emur_T3_right
-    - emur_twist_T3_right
+    - coxa_twist_T3_right
+    - femur_T3_right
+    - femur_twist_T3_right
     - tibia_T3_right
-    - tarsus_T3_rig
+    - tarsus_T3_right
   center_of_mass: thorax
